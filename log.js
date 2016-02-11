@@ -32,25 +32,27 @@ pg.connect(conString, function (err, client, done) {
 
     license.list({
         /*limit: 100000,*/
-        /*skip: 40000,*/
-        include_docs: true
+        /*skip: 40000,
+        include_docs: true*/
     }, function (err, body) {
         if (!err) {
             body.rows.forEach(function (row) {
-                //console.log(row);
-                if (row.doc.type && row.doc.type === 'log') {
+                license.get(row.id, function (doc) {
+                    //console.log(row);
+                    if (doc.type && doc.type === 'log') {
 
-                    client.query('INSERT INTO log (id,rev,login,machine,message,product,version,"user","timestamp",ip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [row.doc['_id'], row.doc['_rev'], row.doc.timestamp ? row.doc.login : row.doc.user, row.doc.machine, row.doc.message, row.doc.product, row.doc.version, row.doc.timestamp ? row.doc.user : null, row.doc.timestamp || row.doc.datetime, row.doc.ip], function (err, result) {
+                        client.query('INSERT INTO log (id,rev,login,machine,message,product,version,"user","timestamp",ip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [doc['_id'], doc['_rev'], doc.timestamp ? doc.login : doc.user, doc.machine, doc.message, doc.product, doc.version, doc.timestamp ? doc.user : null, doc.timestamp || doc.datetime, doc.ip], function (err, result) {
 
-                        if (err) {
-                            console.log(row);
-                            console.log(err);
-                            return;
-                        }
+                            if (err) {
+                                console.log(row);
+                                console.log(err);
+                                return;
+                            }
 
 
-                    });
-                }
+                        });
+                    }
+                });
             });
         }
     });
