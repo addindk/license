@@ -41,23 +41,30 @@ pg.connect(conString, function (err, client, done) {
                 if (current < body.rows.length) {
                     var row = body.rows[current];
                     license.get(row.id, function (err, doc) {
-                        //console.log(row);
-                        if (doc.type && doc.type === 'log') {
-
-                            client.query('INSERT INTO log (id,rev,login,machine,message,product,version,"user","timestamp",ip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [doc['_id'], doc['_rev'], doc.timestamp ? doc.login : doc.user, doc.machine, doc.message, doc.product, doc.version, doc.timestamp ? doc.user : null, doc.timestamp || doc.datetime, doc.ip], function (err, result) {
-
-                                if (err) {
-                                    console.log(row);
-                                    console.log(err);
-
-                                }
-                                current++;
-                                insert();
-
-                            });
-                        } else {
+                        if (err) {
+                            console.log(err);
+                            console.log(row);
                             current++;
                             insert();
+                        } else {
+                            //console.log(row);
+                            if (doc.type && doc.type === 'log') {
+
+                                client.query('INSERT INTO log (id,rev,login,machine,message,product,version,"user","timestamp",ip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [doc['_id'], doc['_rev'], doc.timestamp ? doc.login : doc.user, doc.machine, doc.message, doc.product, doc.version, doc.timestamp ? doc.user : null, doc.timestamp || doc.datetime, doc.ip], function (err, result) {
+
+                                    if (err) {
+                                        console.log(row);
+                                        console.log(err);
+
+                                    }
+                                    current++;
+                                    insert();
+
+                                });
+                            } else {
+                                current++;
+                                insert();
+                            }
                         }
                     });
                 }
