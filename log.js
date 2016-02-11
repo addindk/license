@@ -4,9 +4,7 @@ var pg = require('pg');
 
 var conString = "postgres://postgres:postgres@localhost/license";
 
-//var server = http.createServer(function(req, res) {
 
-// get a pg client from the connection pool
 pg.connect(conString, function (err, client, done) {
 
     var handleError = function (err) {
@@ -36,24 +34,34 @@ pg.connect(conString, function (err, client, done) {
         include_docs: true*/
     }, function (err, body) {
         if (!err) {
-            body.rows.forEach(function (row) {
-                license.get(row.id, function (doc) {
-                    //console.log(row);
-                    if (doc.type && doc.type === 'log') {
+            console.log('rows: ' + body.rows.length);
+            var current = 0;
+            var insert = function () {
+                if (current < body.rows.length) {
+                    var row = body.rows[current];
+                    license.get(row.id, function (doc) {
+                        //console.log(row);
+                        if (doc.type && doc.type === 'log') {
 
-                        client.query('INSERT INTO log (id,rev,login,machine,message,product,version,"user","timestamp",ip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [doc['_id'], doc['_rev'], doc.timestamp ? doc.login : doc.user, doc.machine, doc.message, doc.product, doc.version, doc.timestamp ? doc.user : null, doc.timestamp || doc.datetime, doc.ip], function (err, result) {
+                            client.query('INSERT INTO log (id,rev,login,machine,message,product,version,"user","timestamp",ip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [doc['_id'], doc['_rev'], doc.timestamp ? doc.login : doc.user, doc.machine, doc.message, doc.product, doc.version, doc.timestamp ? doc.user : null, doc.timestamp || doc.datetime, doc.ip], function (err, result) {
 
-                            if (err) {
-                                console.log(row);
-                                console.log(err);
-                                return;
-                            }
+                                if (err) {
+                                    console.log(row);
+                                    console.log(err);
 
+                                }
+                                current++;
+                                insert();
 
-                        });
-                    }
-                });
-            });
+                            });
+                        } else {
+                            current++;
+                            insert();
+                        }
+                    });
+                }
+            };
+            insert();
         }
     });
 
