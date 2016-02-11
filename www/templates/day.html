@@ -1,0 +1,24 @@
+<ion-view view-title="{{license.name}}" id="day">
+    <ion-content scroll="false" class="padding">
+        <div class="wrap-chart">
+            <div class="row">
+                <div class="col text-center">
+                    <button class="button button-icon icon ion-arrow-left-c" ng-click="prev()"></button>
+                </div>
+                <div class="col text-center">
+                    <h2>{{date}} </h2>
+                </div>
+
+                <div class="col text-center">
+                    <button class="button button-icon icon ion-arrow-right-c" ng-click="next()"></button>
+                </div>
+                <div class="col text-center">
+                    <button class="button icon-right ion-ios-arrow-down" ng-click="openPopover($event)">{{choice}}</button>
+                </div>
+            </div>
+
+            <div id="chart" class="chart"></div>
+
+        </div>
+    </ion-content>
+</ion-view>

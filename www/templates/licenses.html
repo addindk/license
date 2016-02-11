@@ -1,0 +1,10 @@
+<ion-view view-title="Licenses">
+  <ion-content>
+     <ion-list>
+      <ion-item class="item-icon-right" ng-repeat="license in licenses | orderBy:'name'" href="#/app/customers/{{stateParams.id}}/licenses/{{license.id}}">
+        <i class="icon ion-ios-arrow-right"></i>
+        {{license.name}}
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-view>

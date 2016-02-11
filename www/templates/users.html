@@ -1,0 +1,10 @@
+<ion-view view-title="Users">
+  <ion-content>
+     <ion-list>
+      <ion-item class="item-icon-right" ng-repeat="user in users | orderBy:'name'" href="#/app/customers/{{customer.id}}/users/{{user.id}}">
+        <i class="icon ion-ios-arrow-right"></i>
+        {{user.name}}
+      </ion-item>
+    </ion-list>
+  </ion-content>
+</ion-view>
