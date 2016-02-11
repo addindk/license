@@ -29,7 +29,7 @@ pg.connect(conString, function (err, client, done) {
     if (handleError(err)) return;
 
     license.list({
-        /*limit: 100000,*/
+        /*limit: 1000*/
         /*skip: 40000,
         include_docs: true*/
     }, function (err, body) {
@@ -40,7 +40,7 @@ pg.connect(conString, function (err, client, done) {
                 console.log(current);
                 if (current < body.rows.length) {
                     var row = body.rows[current];
-                    license.get(row.id, function (doc) {
+                    license.get(row.id, function (err, doc) {
                         //console.log(row);
                         if (doc.type && doc.type === 'log') {
 
