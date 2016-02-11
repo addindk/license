@@ -37,6 +37,7 @@ pg.connect(conString, function (err, client, done) {
             console.log('rows: ' + body.rows.length);
             var current = 0;
             var insert = function () {
+                console.log(current);
                 if (current < body.rows.length) {
                     var row = body.rows[current];
                     license.get(row.id, function (doc) {
