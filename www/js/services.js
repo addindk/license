@@ -48,6 +48,7 @@
                     $scope.modalLogin.remove();
                 }
                 $rootScope.user = data.profile;
+                $rootScope.token = data.token;
                 $localStorage['addindk:jwt'] = data;
                 $rootScope.$emit('authenticated', data);
             });

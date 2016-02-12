@@ -8,14 +8,102 @@ var serveStatic = require('serve-static');
 var pgp = require('pg-promise')({});
 var db = pgp(config.conString);
 var jwt_secret = config.secret;
-
+var iconv = require('iconv-lite');
+var basicAuth = require('basic-auth')
+var moment = require('moment');
 var app = express();
-app.use(serveStatic('public', {
+app.use(serveStatic(__dirname + '/www', {
     'index': ['index.html']
 }));
+var sql = function (file) {
+    var relativePath = './sql/';
+    return new pgp.QueryFile(relativePath + file, { minify: true });
+}
+var sqlProvider = {
+    // external queries for Users:
+    users: {
+        authorize: sql('users/authorize.sql')
+    },
+    // external queries for Loging:
+    log: {
+        peak: sql('log/peak.sql'),
+        daily: sql('log/daily.sql'),
+        daily_product: sql('log/daily_product.sql')
+    },
+    customer: {
+        users: sql('customer/users.sql'),
+        update_license: sql('customer/update-license.sql'),
+        license: sql('customer/license.sql'),
+        licenses: sql('customer/licenses.sql')
+    }
+};
+var auth = function (req, res, next) {
+    function unauthorized(res) {
+        res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+        return res.send(401);
+    }
+    var user = basicAuth(req);
+    if (user) {
+        db.one(sqlProvider.users.authorize, user).then(function (res) {
+            if (res.test) {
+                req.user = { name: user.name, customer: res.customer };
+                next();
+            } else {
+                return unauthorized(res);
+            }
+        }).catch(function (err) {
+            return unauthorized(res);
+        })
+    } else if (req.query.token) {
+        jwt.verify(req.query.token, jwt_secret, function (err, decoded) {
+            if (!err) {
+                req.user = decoded;
+                next();
+            } else {
+                return unauthorized(res);
+            }
+        });
+    } else {
+        return unauthorized(res);
+    }
+};
+
+app.get('/daily/:customer/:product/:start', auth, function (req, res) {
+    console.log(req.user);
+    if (req.user.name === 'rune@addin.dk' || req.user.customer === req.params.customer) {
+        var stop = moment(req.params.start).add(1, 'day');
+        var stopJSON = stop.clone().endOf('day')._d.toJSON();
+        var options = { customer: req.params.customer, product: req.params.product, start: req.params.start, stop: stop.format('YYYY-MM-DD') };
+        db.manyOrNone(sqlProvider.log.daily_product, options).then(function (data) {
+            var csv = "\"product\";\"machine\";\"login\";\"ip\";\"start\";\"stop\"";
+            for (var i = 0; i < data.length; i++) {
+                var row = data[i];
+                csv += "\n\"" + row.product + "\";\"" + row.machine + "\";\"" + row.login + "\";\"" + row.ip + "\";";
+                if (row.start) {
+                    csv += "\"" + row.start.toJSON() + "\";";
+                } else {
+                    csv += ";"
+                }
+                if (row.stop) {
+                    csv += "\"" + row.stop.toJSON() + "\"";
+                } else {
+                    csv += "\"" + stopJSON + "\"";
+                }
+            }
+            res.header('Content-Type', 'text/csv');
+            res.send(iconv.encode(csv, 'win1252'));
+        }).catch(function (err) {
+            res.json(err);
+        });
+    } else {
+        res.send("unauthorized");
+    }
+});
+
 
 var server = http.createServer(app);
 var sio = socketIo.listen(server);
+
 
 var authorize = function () {
     var auth = {
@@ -89,8 +177,26 @@ sio.sockets.on('connection', function (socket) {
         if (socket.hasOwnProperty('token')) {
             jwt.verify(socket.token, jwt_secret, function (err, decoded) {
                 if (decoded.name === 'rune@addin.dk' || decoded.customer === data) {
-                    db.manyOrNone("select id, name from users where customer=$1", [data]).then(function (res) {
+                    db.manyOrNone(sqlProvider.customer.users, [data]).then(function (res) {
                         socket.emit('users', res);
+                    }).catch(function (err) {
+                        socket.emit('error', err);
+                    });
+                } else {
+                    socket.emit('unathenticated', 'permission');
+                }
+            });
+        } else {
+            socket.emit('unathenticated', 'user');
+        }
+    });
+    socket.on('update_license', function (data) {
+        console.log('update_license', data);
+        if (socket.hasOwnProperty('token')) {
+            jwt.verify(socket.token, jwt_secret, function (err, decoded) {
+                if (decoded.name === 'rune@addin.dk' || decoded.customer === data.customer) {
+                    db.none(sqlProvider.customer.update_license, data).then(function (res) {
+                        socket.emit('update_license', res);
                     }).catch(function (err) {
                         socket.emit('error', err);
                     });
@@ -106,7 +212,7 @@ sio.sockets.on('connection', function (socket) {
         if (socket.hasOwnProperty('token')) {
             jwt.verify(socket.token, jwt_secret, function (err, decoded) {
                 if (decoded.name === 'rune@addin.dk' || decoded.customer === data) {
-                    db.manyOrNone("select id, name from product inner join customer_product on product.id=customer_product.product where customer_product.customer=$1", [data]).then(function (res) {
+                    db.manyOrNone(sqlProvider.customer.licenses, [data]).then(function (res) {
                         socket.emit('licenses', res);
                     }).catch(function (err) {
                         socket.emit('error', err);
@@ -124,7 +230,7 @@ sio.sockets.on('connection', function (socket) {
         if (socket.hasOwnProperty('token')) {
             jwt.verify(socket.token, jwt_secret, function (err, decoded) {
                 if (data.product && data.customer && (decoded.name === 'rune@addin.dk' || decoded.customer === data.customer)) {
-                    db.manyOrNone("select id, name from product inner join customer_product on product.id=customer_product.product where customer_product.customer=$1 and customer_product.product=$2", [data.customer, data.product]).then(function (res) {
+                    db.manyOrNone(sqlProvider.customer.license, [data.customer, data.product]).then(function (res) {
                         socket.emit('license', res);
                     }).catch(function (err) {
                         socket.emit('error', err);
@@ -142,34 +248,7 @@ sio.sockets.on('connection', function (socket) {
         if (socket.hasOwnProperty('token')) {
             jwt.verify(socket.token, jwt_secret, function (err, decoded) {
                 if (data.product && data.customer && (decoded.name === 'rune@addin.dk' || decoded.customer === data.customer)) {
-
-                    var sql = "WITH range AS (SELECT $1::date AS start_date, $2::date AS end_date)" +
-                        ", cte AS (" +
-                        "SELECT * " +
-                        "FROM   log, range r " +
-                        "WHERE  \"timestamp\"::date  < r.end_date " +
-                        "AND    \"timestamp\"::date >= r.start_date " +
-                        "AND product = $3 " +
-                        "AND \"user\" = $4 " +                        
-                        "), " +
-                        "sub as ( " +
-                        "SELECT DISTINCT machine, \"timestamp\"::date AS log_date, \"timestamp\"::time AS log_time, -1 AS ct "+
-                        "FROM cte " +
-                        "WHERE message = 'Stop' " +
-                        "UNION ALL " +
-                        "SELECT DISTINCT machine, \"timestamp\"::date, \"timestamp\"::time, 1 "+
-                        "FROM cte " +
-                        "WHERE message = 'Start' " +
-                        "), " +
-                        "cte2 AS (" +
-                        "SELECT log_date, sum(ct) OVER (PARTITION BY log_date ORDER BY log_date, log_time, ct) AS session_ct " +
-                        "FROM   sub " +
-                        ") " +
-                        "SELECT log_date, max(session_ct) AS max_sessions " +
-                        "FROM   cte2, range r " +
-                        "GROUP  BY 1 " +
-                        "ORDER  BY 1;";
-                    db.manyOrNone(sql, [data.start, data.stop, data.product, data.customer]).then(function (res) {
+                    db.manyOrNone(sqlProvider.log.peak, data).then(function (res) {
                         socket.emit('peak', res);
                     }).catch(function (err) {
                         socket.emit('error', err);
@@ -187,24 +266,7 @@ sio.sockets.on('connection', function (socket) {
         if (socket.hasOwnProperty('token')) {
             jwt.verify(socket.token, jwt_secret, function (err, decoded) {
                 if (data.product && data.customer && (decoded.name === 'rune@addin.dk' || decoded.customer === data.customer)) {
-
-                    var sql = "WITH range AS (SELECT $1::date AS start_date, $2::date AS end_date)," +
-                        "cte AS (" +
-                        "SELECT * " +
-                        "FROM   log, range r " +
-                        "WHERE  \"timestamp\"::date  < r.end_date " +
-                        "AND    \"timestamp\"::date >= r.start_date " +
-                        "AND product = $3 " +
-                        "AND \"user\" = $4 " +
-                        ")," +
-                        "cte2 as (" +
-                        "SELECT *, min(\"timestamp\") OVER (partition by machine ORDER BY \"timestamp\" rows between 1 following and unbounded following) " +
-                        "FROM   cte" +
-                        ")" +
-                        "select login,machine,ip,timestamp as start,min as stop from cte2 " +
-                        "where message = 'Start' " +
-                        "order by machine, start;";
-                    db.manyOrNone(sql, [data.start, data.stop, data.product, data.customer]).then(function (res) {
+                    db.manyOrNone(sqlProvider.log.daily, data).then(function (res) {
                         socket.emit('day', res);
                     }).catch(function (err) {
                         socket.emit('error', err);
@@ -217,36 +279,6 @@ sio.sockets.on('connection', function (socket) {
             socket.emit('unathenticated', 'user');
         }
     });
-    
-    /*
-    WITH cte1 AS (
-  SELECT extract(day from start) as day, start, stop
-  FROM   log
-  WHERE  product='f988e515-9d46-462b-beae-a119430e74f5'
-  AND    "user"='5896b645-bd88-413a-b46a-bf95cee69d22'
-  AND    start>='2015-01-01 0:0+0'
-  AND    start<'2015-02-01 0:0+0'
-  AND    message='Start'
-),
-cte2 as (
-  SELECT lead(start, 1, 'infinity') OVER w < max(stop) OVER w AS range_end,
-         day, start, stop,lead(start, 1, 'infinity') OVER w, max(stop) OVER w
-  FROM   cte1
-  WINDOW w AS (partition by day ORDER BY start)
-),
-cte3 as(
-  select count(*), day, max 
-  from cte2 
-  --where range_end 
-  group by day, max 
-  order by day
-)
-select distinct day, max(count) over(partition by day) from cte3 order by day*/
-
-
-
-
-
     socket.on('customers', function (data) {
         if (socket.hasOwnProperty('token')) {
             jwt.verify(socket.token, jwt_secret, function (err, decoded) {
@@ -289,7 +321,7 @@ select distinct day, max(count) over(partition by day) from cte3 order by day*/
                 }
                 else {
                     socket.token = data.t;
-                    socket.profile = decoded;
+
                     socket.emit('authenticated', {
                         token: data.t,
                         profile: decoded
@@ -298,21 +330,22 @@ select distinct day, max(count) over(partition by day) from cte3 order by day*/
 
             });
         } else if (data.hasOwnProperty('n') && data.hasOwnProperty('p')) {
-            db.one("SELECT password = crypt($1, password) as test, customer FROM users where id=$2", [data.p, data.n]).then(function (res) {
+            db.one(sqlProvider.users.authorize, { pass: data.p, name: data.n }).then(function (res) {
                 if (res.test) {
-                    socket.profile = {
+                    var profile = {
                         name: data.n,
                         customer: res.customer
                     };
-                    var token = jwt.sign(socket.profile, jwt_secret, {
+                    var token = jwt.sign(profile, jwt_secret, {
                         expiresIn: 60 * 60 * 24
                     });
+                    socket.token = token;
                     socket.emit('authenticated', {
                         token: token,
-                        profile: socket.profile
+                        profile: profile
                     });
                 } else {
-                    socket.emit('unathenticated', err);
+                    socket.emit('unathenticated');
                 }
             }).catch(function (err) {
                 socket.emit('unathenticated', err);
@@ -322,9 +355,6 @@ select distinct day, max(count) over(partition by day) from cte3 order by day*/
     socket.on('unauthenticate', function (data) {
         if (socket.hasOwnProperty('token')) {
             delete socket.token;
-        }
-        if (socket.hasOwnProperty('profile')) {
-            delete socket.profile;
         }
         socket.emit('unauthenticated', 'logout');
     });

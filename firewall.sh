@@ -15,3 +15,5 @@ sudo iptables -A OUTPUT -o eth1 -j ACCEPT
 sudo iptables -P INPUT DROP
 sudo iptables -P OUTPUT DROP
 sudo iptables -P FORWARD DROP
+
+copy log from '/users/runetvilum/Github/license/log.csv' DELIMITER ';' CSV HEADER

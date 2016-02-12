@@ -1,7 +1,7 @@
 var config = require('./config.json');
 var license = require('nano')(config.couchdb.url + '/_users');
 var pg = require('pg');
-var conString = "postgres://postgres@localhost/license";
+var conString = "postgres://localhost/license";
 
 //var server = http.createServer(function(req, res) {
 

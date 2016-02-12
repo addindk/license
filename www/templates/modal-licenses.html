@@ -1,0 +1,13 @@
+<ion-modal-view>
+    <div class="bar bar-header bar-dark">
+        <button class="button button-clear" ng-click="modalEdit.hide()">Luk</button>
+        <h2 class="title">{{item.name}}</h2>
+    </div>
+    <ion-content class="has-header">
+        <div class="list">
+            <label class="item item-input">
+                <input type="number" placeholder="Number of licenses" ng-model="item.licenses" ng-change="changeLicenses()">
+            </label>
+        </div>
+    </ion-content>
+</ion-modal-view>

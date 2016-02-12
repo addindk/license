@@ -75,13 +75,31 @@ angular.module('starter.controllers', [])
         socket.emit('users', $stateParams.id)
     })
 
-    .controller('licensesCtrl', function ($scope, $stateParams, socket) {
+    .controller('licensesCtrl', function ($scope, $stateParams, socket, $ionicModal) {
         $scope.stateParams = $stateParams;
         socket.once('licenses', function (data) {
             $scope.licenses = data;
             console.log(data);
         });
-        socket.emit('licenses', $stateParams.id)
+        socket.emit('licenses', $stateParams.id);
+        $ionicModal.fromTemplateUrl('templates/modal-licenses.html', {
+            scope: $scope
+        }).then(function (modal) {
+            $scope.modalEdit = modal;
+        });
+        $scope.$on('$destroy', function () {
+            $scope.modalEdit.remove();
+        });
+        $scope.edit = function (item) {
+            $scope.item = item;
+            $scope.modalEdit.show();
+        }
+        socket.once('update_license', function (data) {
+            console.log('update_license', data);
+        });
+        $scope.changeLicenses = function () {
+            socket.emit('update_license', { customer: $stateParams.id, product: $scope.item.id, licenses: $scope.item.licenses });
+        };
     })
 
     .controller('licenseCtrl', function ($scope, $rootScope, $stateParams, socket, license, $state) {
@@ -92,29 +110,31 @@ angular.module('starter.controllers', [])
             $state.go('app.day', { id: $stateParams.id, product: $stateParams.product, date: nu.format('YYYY-MM') + '-' + day });
         };
         var drawChart = function () {
-            if (data.length > 0) {
-                dataTable = [['Date', 'Peak', 'Allowed']];
-                for (var i = 0; i < data.length; i++) {
-                    var p = data[i];
-                    dataTable.push([moment(p.log_date).format('DD'), parseInt(p.max_sessions), 5]);
-                }
-                var options = {
-                    title: 'Peak usages',
-                    vAxis: { title: 'Licenses' },
-                    hAxis: { title: 'Day' },
-                    seriesType: 'bars',
-                    series: { 1: { type: 'line' } }
-                };
-                var content = document.querySelector('#license[nav-view="active"] #chart');
-                if (!content) {
-                    content = document.querySelector('#license[nav-view="stage"] #chart');
-                }
-                chart = new google.visualization.ComboChart(content);
-                chart.draw(google.visualization.arrayToDataTable(dataTable), options);
-                google.visualization.events.addListener(chart, 'select', selectHandler);
-            }
-        };
 
+            dataTable = [['Date', 'Peak', 'Allowed']];
+            for (var i = 0; i < data.length; i++) {
+                var p = data[i];
+                dataTable.push([moment(p.log_date).format('DD'), parseInt(p.max_sessions), max]);
+            }
+            var options = {
+                title: 'Peak usages',
+                vAxis: { title: 'Licenses' },
+                hAxis: { title: 'Day' },
+                seriesType: 'bars',
+                series: { 1: { type: 'line' } }
+            };
+            var content = document.querySelector('#license[nav-view="active"] #chart');
+            if (!content) {
+                content = document.querySelector('#license[nav-view="stage"] #chart');
+            }
+            chart = new google.visualization.ComboChart(content);
+            chart.draw(google.visualization.arrayToDataTable(dataTable), options);
+            google.visualization.events.addListener(chart, 'select', selectHandler);
+        };
+        var max = 1;
+        if (license.licenses) {
+            max = license.licenses;
+        }
         $scope.license = license;
         var nu = moment();
         var getData = function () {
@@ -156,7 +176,7 @@ angular.module('starter.controllers', [])
             drawChart();
             $scope.popover.hide();
         };
-        $scope.choice = 'Machine';
+        $scope.choice = 'machine';
         $scope.openPopover = function ($event) {
             $scope.popover.show($event);
         };
@@ -167,48 +187,38 @@ angular.module('starter.controllers', [])
         $scope.$on('$destroy', function () {
             $scope.popover.remove();
         });
-        var selectHandler = function () {
-            var s = chart.getSelection();
-            var day = dataTable[s.row + 1][0];
-            $state.go('app.day', { id: $stateParams.id, product: $stateParam.product, date: nu.format('YYYY-MM') + '-' + day });
-        };
         var drawChart = function () {
-            if (data.length > 0) {
-                dataTable = new google.visualization.DataTable();
-                dataTable.addColumn({ type: 'string', id: 'item' });
-                dataTable.addColumn({ type: 'date', id: 'Start' });
-                dataTable.addColumn({ type: 'date', id: 'End' });
+            dataTable = new google.visualization.DataTable();
+            dataTable.addColumn({ type: 'string', id: 'item' });
+            dataTable.addColumn({ type: 'date', id: 'Start' });
+            dataTable.addColumn({ type: 'date', id: 'End' });
 
-                for (var i = 0; i < data.length; i++) {
-                    var p = data[i];
-                    if (!p.stop) {
-                        var n = nu.clone().endOf('day');
-                        p.stop = n._d;
-                    } else {
-                        p.stop = new Date(p.stop);
-                    }
-                    p.start = new Date(p.start);
-                    if ($scope.choice === 'User') {
-                        dataTable.addRow([p.login, p.start, p.stop]);
-                    } else {
-                        dataTable.addRow([p.machine, p.start, p.stop]);
-                    }
+            for (var i = 0; i < data.length; i++) {
+                var p = data[i];
+                if (!p.stop) {
+                    var n = nu.clone().endOf('day');
+                    p.stop = n._d;
+                } else {
+                    p.stop = new Date(p.stop);
                 }
-    
-                var container = document.querySelector('#day[nav-view="active"] #chart');
-                if (!container) {
-                    container = document.querySelector('#day[nav-view="stage"] #chart');
-                }
-                chart = new google.visualization.Timeline(container);
-                chart.draw(dataTable);
-                //google.visualization.events.addListener(chart, 'select', selectHandler);
+                p.start = new Date(p.start);
+                dataTable.addRow([p[$scope.choice], p.start, p.stop]);
             }
+
+            var container = document.querySelector('#day[nav-view="active"] #chart');
+            if (!container) {
+                container = document.querySelector('#day[nav-view="stage"] #chart');
+            }
+            chart = new google.visualization.Timeline(container);
+            chart.draw(dataTable);
         };
 
         $scope.license = license;
 
         var nu = moment($stateParams.date);
+
         var getData = function () {
+            $scope.log = encodeURI('/daily/' + $stateParams.id + '/' + $stateParams.product + '/' + nu.format('YYYY-MM-DD') + '?token=' + $rootScope.token);
             var next = nu.clone().add(1, 'd');
             $scope.date = nu.format('YYYY-MM-DD');
             socket.once('day', function (res) {
@@ -243,7 +253,15 @@ angular.module('starter.controllers', [])
             disableBack: true
         });
         $rootScope.$on('authenticated', function (data) {
-            $state.go($rootScope.toState.name, $rootScope.toParams);
+            if ($rootScope.toState) {
+                $state.go($rootScope.toState.name, $rootScope.toParams);
+            } else {
+                if ($rootScope.user.name === 'rune@addin.dk') {
+                    $state.go('app.customers');
+                } else {
+                    $state.go('app.customer', { id: $rootScope.user.customer });
+                }
+            }
         });
         $scope.cancel = function () {
             $state.go($rootScope.fromState.name, $rootScope.fromParams);

@@ -1,0 +1,14 @@
+﻿delete from log;
+copy log from '/users/runetvilum/Github/license/log0.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log1.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log2.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log3.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log4.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log5.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log6.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log7.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log8.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log9.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log10.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log11.csv' DELIMITER ';' CSV HEADER;
+copy log from '/users/runetvilum/Github/license/log12.csv' DELIMITER ';' CSV HEADER;

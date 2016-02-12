@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/addindk/license#readme",
   "dependencies": {
+    "basic-auth": "^1.0.3",
     "ejs": "^2.4.1",
     "email-templates": "^2.1.0",
     "express": "^4.13.4",
@@ -25,7 +26,9 @@
     "gulp-minify-css": "^0.3.0",
     "gulp-rename": "^1.2.0",
     "gulp-sass": "^2.0.4",
+    "iconv-lite": "^0.4.13",
     "jsonwebtoken": "5.4.0",
+    "moment": "^2.11.2",
     "nano": "^6.2.0",
     "nodemailer": "^2.1.0",
     "pg": "^4.4.4",
