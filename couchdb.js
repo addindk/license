@@ -36,7 +36,7 @@ app.put('/:id', function (req, res) {
             reject();
         }
     }).then(function (data) {
-        return db.any(sqlProvider.has_product, data);
+        return db.any(sqlProvider.product, data);
     }).then(function (data) {
         if (data.length === 1) {
             var status = 1;
@@ -54,6 +54,7 @@ app.put('/:id', function (req, res) {
                 log_timestamp: new Date(),
                 ip: req.ip
             }
+            console.log(doc);
             return db.none(sqlProvider.add, doc);
         } else {
             return Promise.reject();
