@@ -5,13 +5,7 @@ var pgp = require('pg-promise')({});
 var db = pgp(config.conString);
 var app = express();
 var basicAuth = require('basic-auth');
-//var bodyParser = require('body-parser');
 var uuid = require('uuid');
-/*app.use(bodyParser.json({
-    type: '*\/*'
-}));*/
-app.set('trust proxy', ['10.133.34.15']);
-
 var sql = function (file) {
     var relativePath = './sql/';
     return new pgp.QueryFile(relativePath + file, { minify: true });
@@ -22,23 +16,15 @@ var sqlProvider = {
     log: sql('log/log.sql'),
     add: sql('log/add.sql')
 };
-app.get('/:id', function (req, res) {
-    console.log(req.params.id);
-    res.send('ok');
-});
+
+app.set('trust proxy', ['10.133.34.15']);
 app.put('/:id', function (req, res) {
-    console.log(req.params);
     req.body = '';
     req.on('data', function (chunk) {
         req.body += chunk;
     });
     req.on('end', function () {
-
-        console.log(req.headers);
-        console.log(req.params.id);
-        console.log(req.body);
         req.body = JSON.parse(req.body);
-        console.log(req.body);
         new Promise(function (resolve, reject) {
             var user = basicAuth(req);
             if (user && req.body.product) {
@@ -49,7 +35,6 @@ app.put('/:id', function (req, res) {
         }).then(function (data) {
             return db.any(sqlProvider.product, data);
         }).then(function (data) {
-            console.log('2', data);
             if (data.length === 1) {
                 var status = 1;
                 if (req.body.message && req.body.message === 'Stop') {
@@ -72,7 +57,6 @@ app.put('/:id', function (req, res) {
                 return Promise.reject();
             }
         }).then(function () {
-            console.log('3');
             res.send('ok');
         }).catch(function (err) {
             console.log('err', err);
