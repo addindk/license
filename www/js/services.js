@@ -30,7 +30,7 @@
                 socket.emit('unauthenticate');
             };
 
-            socket = io.connect(url);
+            socket = io.connect();
             socket.on('connect', function (data) {
                 console.log('connect');
                 authenticate();
