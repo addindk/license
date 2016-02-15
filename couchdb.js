@@ -20,7 +20,9 @@ var sqlProvider = {
     log: sql('log/log.sql'),
     add: sql('log/add.sql')
 };
-
+app.get('/',function(req,res){
+    res.send('ok');
+});
 app.put('/:id', function (req, res) {
     new Promise(function (resolve, reject) {
         var user = basicAuth(req);
