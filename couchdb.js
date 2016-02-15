@@ -5,7 +5,7 @@ var pgp = require('pg-promise')({});
 var db = pgp(config.conString);
 var app = express();
 var basicAuth = require('basic-auth');
-var bodyParser = require('body-parser');
+//var bodyParser = require('body-parser');
 var uuid = require('uuid');
 /*app.use(bodyParser.json({
     type: '*\/*'
@@ -27,6 +27,7 @@ app.get('/:id', function (req, res) {
     res.send('ok');
 });
 app.put('/:id', function (req, res) {
+    console.log(req.params);
     req.body = '';
     req.on('data', function (chunk) {
         req.body += chunk;
