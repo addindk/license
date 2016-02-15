@@ -40,7 +40,6 @@ app.put('/:id', function (req, res) {
     }).then(function (data) {
         if (data.length === 1) {
             var status = 1;
-            var log_timestamp = new Date();
             if (req.body.message && req.body.message === 'Stop') {
                 status = -1;
             }
@@ -52,7 +51,7 @@ app.put('/:id', function (req, res) {
                 product_id: data[0].product,
                 product_version: req.body.version,
                 customer_id: data[0].customer,
-                log_timestamp: log_timestamp.toJSON(),
+                log_timestamp: new Date(),
                 ip: req.ip
             }
             return db.none(sqlProvider.add, doc);
@@ -67,6 +66,6 @@ app.put('/:id', function (req, res) {
     })
 });
 
-app.listen(3001, function () {
-    console.log('listening on http://localhost:3001');
+app.listen(4001, function () {
+    console.log('listening on http://localhost:4001');
 });
