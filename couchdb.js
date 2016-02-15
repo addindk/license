@@ -20,7 +20,7 @@ var sqlProvider = {
     log: sql('log/log.sql'),
     add: sql('log/add.sql')
 };
-app.get('/',function(req,res){
+app.get('/:id',function(req,res){
     console.log('ok');
     res.send('ok');
 });
