@@ -9,7 +9,7 @@ var pgp = require('pg-promise')({});
 var db = pgp(config.conString);
 var jwt_secret = config.secret;
 var iconv = require('iconv-lite');
-var basicAuth = require('basic-auth')
+var basicAuth = require('basic-auth');
 var moment = require('moment');
 var app = express();
 app.use(serveStatic(__dirname + '/www', {

@@ -1,0 +1,2 @@
+INSERT INTO log(id, login, machine, status, product_id, product_version, customer_id, log_timestamp, ip)
+VALUES (${id}, ${login}, ${machine}, ${status}, ${product_id}, ${product_version}, ${customer_id}, ${log_timestamp}, ${ip})
