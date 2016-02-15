@@ -38,10 +38,12 @@ app.put('/:id', function (req, res) {
         console.log(req.params.id);
         console.log(req.body);
         req.body =JSON.parse(req.body);
+        console.log(req.body);
         new Promise(function (resolve, reject) {
             var user = basicAuth(req);
             if (user) {
                 db.one(sqlProvider.authorize, user).then(function (res) {
+                    console.log('1',res);
                     if (res.test) {
                         resolve({ product: req.params.id, customer: res.customer });
                     } else {
@@ -54,6 +56,7 @@ app.put('/:id', function (req, res) {
         }).then(function (data) {
             return db.any(sqlProvider.product, data);
         }).then(function (data) {
+            console.log('2',data);
             if (data.length === 1) {
                 var status = 1;
                 if (req.body.message && req.body.message === 'Stop') {
@@ -75,9 +78,11 @@ app.put('/:id', function (req, res) {
             } else {
                 return Promise.reject();
             }
-        }).then(function () {
+        }).then(function (res) {
+            console.log('3',res);
             res.send('ok');
-        }).catch(function () {
+        }).catch(function (err) {
+            console.log('err',err);
             res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
             res.send(401);
         });
