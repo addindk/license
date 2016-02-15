@@ -51,7 +51,6 @@ app.put('/:id', function (req, res) {
                     log_timestamp: new Date(),
                     ip: req.ip
                 }
-                console.log(doc);
                 return db.none(sqlProvider.add, doc);
             } else {
                 return Promise.reject();
