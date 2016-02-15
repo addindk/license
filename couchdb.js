@@ -32,9 +32,11 @@ app.put('/:id', function (req, res) {
         req.body += chunk;
     });
     req.on('end', function () {
+        
         console.log(req.headers);
         console.log(req.params.id);
         console.log(req.body);
+        req.body =JSON.parse(req.body);
         new Promise(function (resolve, reject) {
             var user = basicAuth(req);
             if (user) {
