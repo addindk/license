@@ -21,6 +21,7 @@ var sqlProvider = {
     add: sql('log/add.sql')
 };
 app.get('/',function(req,res){
+    console.log('ok');
     res.send('ok');
 });
 app.put('/:id', function (req, res) {
