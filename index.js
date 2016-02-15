@@ -13,7 +13,7 @@ var basicAuth = require('basic-auth');
 var moment = require('moment');
 var app = express();
 var server = http.createServer(app);
-var socketIo = require('socket.io')(server, {path: '/lm/socket.io'});
+var socketIo = require('socket.io');//(server, {path: '/lm/socket.io'});
 var sio = socketIo.listen(server);
 var socketioJwt = require('socketio-jwt');
 app.use(express.static('www'));
