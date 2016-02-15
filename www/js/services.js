@@ -6,9 +6,6 @@
         .factory('socket', function ($localStorage, $rootScope, $ionicModal, $timeout, $ionicSideMenuDelegate, $ionicPopup) {
             var socket;
             var $scope = $rootScope.$new();
-            var url = 'http://localhost:3000';
-            //var url = 'https://geo.os2geo.dk';
-
             var authenticate = function () {
                 if ($localStorage.hasOwnProperty('addindk:jwt')) {
                     var profile = $localStorage['addindk:jwt'].profile;
@@ -30,7 +27,7 @@
                 socket.emit('unauthenticate');
             };
 
-            socket = io.connect('https://addin.dk/lm/socket.io');
+            socket = io.connect('https://addin.dk', { path: '/lm/socket.io' });
             socket.on('connect', function (data) {
                 console.log('connect');
                 authenticate();

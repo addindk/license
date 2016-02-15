@@ -1,9 +1,9 @@
 var express = require('express');
 var http = require('http');
 var config = require('./config.json');
-var socketIo = require('socket.io');
+
 var jwt = require('jsonwebtoken');
-var socketioJwt = require('socketio-jwt');
+
 //var serveStatic = require('serve-static');
 var pgp = require('pg-promise')({});
 var db = pgp(config.conString);
@@ -12,6 +12,10 @@ var iconv = require('iconv-lite');
 var basicAuth = require('basic-auth');
 var moment = require('moment');
 var app = express();
+var server = http.createServer(app);
+var socketIo = require('socket.io')(server, {path: '/lm/socket.io'});
+var sio = socketIo.listen(server);
+var socketioJwt = require('socketio-jwt');
 app.use(express.static('www'));
 /*app.use(serveStatic(__dirname + '/www', {
     'index': ['index.html']
@@ -102,8 +106,7 @@ app.get('/daily/:customer/:product/:start', auth, function (req, res) {
 });
 
 
-var server = http.createServer(app);
-var sio = socketIo.listen(server);
+
 
 
 var authorize = function () {
