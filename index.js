@@ -4,7 +4,7 @@ var config = require('./config.json');
 var socketIo = require('socket.io');
 var jwt = require('jsonwebtoken');
 var socketioJwt = require('socketio-jwt');
-var serveStatic = require('serve-static');
+//var serveStatic = require('serve-static');
 var pgp = require('pg-promise')({});
 var db = pgp(config.conString);
 var jwt_secret = config.secret;
@@ -12,9 +12,10 @@ var iconv = require('iconv-lite');
 var basicAuth = require('basic-auth');
 var moment = require('moment');
 var app = express();
-app.use(serveStatic(__dirname + '/www', {
+app.use(express.static('www'));
+/*app.use(serveStatic(__dirname + '/www', {
     'index': ['index.html']
-}));
+}));*/
 var sql = function (file) {
     var relativePath = './sql/';
     return new pgp.QueryFile(relativePath + file, { minify: true });

@@ -1,11 +1,19 @@
 var config = require('./config.json');
 var fs = require('fs');
 var license = require('nano')(config.couchdb.url + '/license');
-var pg = require('pg');
+var pgp = require('pg-promise')({});
+var db = pgp(config.conString);
 var moment = require('moment');
-
-var conString = "postgres://postgres:postgres@localhost/license";
+var current = 0;
+var next = 'next.json';
 var limit = 50000;
+var sql = function (file) {
+    var relativePath = './sql/';
+    return new pgp.QueryFile(relativePath + file, { minify: true });
+}
+var sqlProvider = {
+    copy: sql('log/copy.sql')
+};
 var writeDoc = function (file, doc) {
     if (doc.type && doc.type === 'log') {
         var s = "\n\"" + doc['_id'] + "\";";
@@ -60,100 +68,48 @@ var writeDoc = function (file, doc) {
     }
 }
 var get = function (options) {
-    var file = 'log' + current + '.csv';
-    fs.writeFileSync(file, "id;login;machine;status;product_id;product_version;customer_id;log_timestamp;ip");
-    license.list(options, function (err, body) {
-        console.log(body.rows.length);
-        if (body.rows.length > 1) {
-            for (var i = 0; i < body.rows.length - 1; i++) {
-                var row = body.rows[i];
+
+    license.changes(options, function (err, body) {
+        console.log(body.results.length);
+        if (body.results.length > 0) {
+            var file = 'log.csv';
+            fs.writeFileSync(file, "id;login;machine;status;product_id;product_version;customer_id;log_timestamp;ip");
+            for (var i = 0; i < body.results.length; i++) {
+                var row = body.results[i];
                 var doc = row.doc;
                 writeDoc(file, doc);
             }
-            current++;
-            get({
-                startkey_docid: body.rows[body.rows.length - 1].id,
-                limit: limit,
-                include_docs: true
-            });
-        } else if (body.rows.length === 1) {
-            writeDoc(file, body.rows[0].doc);
+            db.none(sqlProvider.copy, { file: __dirname + '/' + file }).then(function (res) {
+                fs.writeFile(next, JSON.stringify({ since: body.last_seq }), function (err, data) {
+                    get({
+                        since: body.last_seq,
+                        limit: limit,
+                        include_docs: true
+                    });
+                });
+            }).catch(function (err) {
+                console.log(err);
+            })
         }
     });
 };
-var current = 0;
-get({
-    limit: limit,
-    include_docs: true
+
+fs.stat(next, function (err, stats) {
+    if (err) {
+        get({
+            limit: limit,
+            include_docs: true
+        });
+    } else {
+        fs.readFile(next, 'utf8', function (err, data) {
+            if (!err) {
+                var doc = JSON.parse(data);
+                get({
+                    since: doc.since,
+                    limit: limit,
+                    include_docs: true
+                });
+            }
+        })
+    }
 });
-//})
-/*
-pg.connect(conString, function (err, client, done) {
-
-    var handleError = function (err) {
-        // no error occurred, continue with the request
-        if (!err) return false;
-
-        // An error occurred, remove the client from the connection pool.
-        // A truthy value passed to done will remove the connection from the pool
-        // instead of simply returning it to be reused.
-        // In this case, if we have successfully received a client (truthy)
-        // then it will be removed from the pool.
-        if (client) {
-            done(client);
-        }
-        console.log(err);
-        //res.writeHead(500, {'content-type': 'text/plain'});
-        //res.end('An error occurred');
-        return true;
-    };
-
-    // handle an error from the connection
-    if (handleError(err)) return;
-
-    license.list({
-        //limit: 1000,
-        //skip: 40000,
-        //include_docs: true
-    }, function (err, body) {
-        if (!err) {
-            console.log('rows: ' + body.rows.length);
-            var current = 0;
-            var insert = function () {
-                console.log(current);
-                if (current < body.rows.length) {
-                    var row = body.rows[current];
-                    license.get(row.id, function (err, doc) {
-                        if (err) {
-                            console.log(err);
-                            console.log(row);
-                            current++;
-                            insert();
-                        } else {
-                            //console.log(row);
-                            if (doc.type && doc.type === 'log') {
-
-                                client.query('INSERT INTO log (id,rev,login,machine,message,product,version,"user","timestamp",ip) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)', [doc['_id'], doc['_rev'], doc.timestamp ? doc.login : doc.user, doc.machine, doc.message, doc.product, doc.version, doc.timestamp ? doc.user : null, doc.timestamp || doc.datetime, doc.ip], function (err, result) {
-
-                                    if (err) {
-                                        console.log(row);
-                                        console.log(err);
-
-                                    }
-                                    current++;
-                                    insert();
-
-                                });
-                            } else {
-                                current++;
-                                insert();
-                            }
-                        }
-                    });
-                }
-            };
-            insert();
-        }
-    });
-});
-*/
