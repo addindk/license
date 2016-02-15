@@ -30,7 +30,7 @@
                 socket.emit('unauthenticate');
             };
 
-            socket = io.connect();
+            socket = io.connect('https://addin.dk/lm');
             socket.on('connect', function (data) {
                 console.log('connect');
                 authenticate();
