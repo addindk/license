@@ -71,8 +71,8 @@ app.put('/:id', function (req, res) {
             } else {
                 return Promise.reject();
             }
-        }).then(function (res) {
-            console.log('3', res);
+        }).then(function () {
+            console.log('3');
             res.send('ok');
         }).catch(function (err) {
             console.log('err', err);
