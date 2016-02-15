@@ -7,7 +7,7 @@ var app = express();
 var basicAuth = require('basic-auth');
 var bodyParser = require('body-parser');
 var uuid = require('uuid');
-app.use(bodyParser.json());
+app.use(bodyParser.text());
 app.set('trust proxy', ['10.133.34.15']);
 
 var sql = function (file) {
