@@ -25,6 +25,8 @@ app.get('/:id',function(req,res){
     res.send('ok');
 });
 app.put('/:id', function (req, res) {
+    console.log(req.params.id);
+    console.log(req.body);
     new Promise(function (resolve, reject) {
         var user = basicAuth(req);
         if (user) {
