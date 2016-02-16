@@ -218,7 +218,7 @@ angular.module('starter.controllers', [])
         var nu = moment($stateParams.date);
 
         var getData = function () {
-            $scope.log = encodeURI('/daily/' + $stateParams.id + '/' + $stateParams.product + '/' + nu.format('YYYY-MM-DD') + '?token=' + $rootScope.token);
+            $scope.log = encodeURI('/lm/daily/' + $stateParams.id + '/' + $stateParams.product + '/' + nu.format('YYYY-MM-DD') + '?token=' + $rootScope.token);
             var next = nu.clone().add(1, 'd');
             $scope.date = nu.format('YYYY-MM-DD');
             socket.once('day', function (res) {
