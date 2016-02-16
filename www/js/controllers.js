@@ -59,9 +59,7 @@ angular.module('starter.controllers', [])
                     $state.go("login");
                 }).error(function (data, status, headers, config) {
                     console.log(data);
-                    $scope.data = data;
-                    $scope.status = status;
-                    $scope.error = true;
+                    $scope.error = data.message;
                     // called asynchronously if an error occurs
                     // or server returns response with an error status.
                 });

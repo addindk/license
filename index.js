@@ -115,7 +115,13 @@ app.post('/verify/:code', bodyParser.json(), function (req, res) {
             message: 'Nyt password er påkrævet.'
         }));
     }
-    db.any(sqlProvider.users.update, { verification_code: req.params.code, password: req.body.password, verified: new Date() }).then(function (data) {
+    var options = {
+        verification_code: req.params.code,
+        password: req.body.password,
+        verified: new Date()
+    };
+    console.log(options);
+    db.any(sqlProvider.users.update, options).then(function (data) {
         console.log(data);
         res.json({
             ok: true
