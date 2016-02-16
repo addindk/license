@@ -429,6 +429,7 @@ sio.sockets.on('connection', function (socket) {
                     socket.emit('unathenticated');
                 }
             }).catch(function (err) {
+                console.log(err);
                 socket.emit('unathenticated', err);
             })
         }
