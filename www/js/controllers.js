@@ -85,7 +85,8 @@ angular.module('starter.controllers', [])
         $scope.doc = {
             name: '',
             email: '',
-            role: 'user'
+            role: 'user',
+            customer: $stateParams.id
         };
         socket.on('users', function (data) {
             $scope.users = data;
@@ -97,7 +98,8 @@ angular.module('starter.controllers', [])
                 $scope.doc = {
                     name: '',
                     email: '',
-                    role: 'user'
+                    role: 'user',
+                    customer: $stateParams.id
                 };
                 socket.emit('users', $stateParams.id);
             });
