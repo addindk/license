@@ -27,6 +27,7 @@ var sql = function (file) {
 var sqlProvider = {
     // external queries for Users:
     users: {
+        add: sql('users/add.sql'),
         authorize: sql('users/authorize.sql')
     },
     // external queries for Loging:
@@ -171,7 +172,7 @@ sio.sockets.on('connection', function (socket) {
         socket.emit('authenticated', { token: socket.token, profile: socket.decoded_token });
     }*/
     socket.on('addUser', function (data) {
-        db.one("insert into users(id,name,password,customer) values($1,$2,crypt($3, gen_salt('md5')),$4)", [data.email, data.name, data.password, data.customer]).then(function (res) {
+        db.one(sqlProvider.users.add, data).then(function (res) {
             socket.emit('addUser', res);
         }).catch(function (err) {
             socket.emit('error', err);

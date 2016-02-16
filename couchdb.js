@@ -47,7 +47,7 @@ app.put('/:id', function (req, res) {
                     status: status,
                     product_id: req.body.product,
                     product_version: req.body.version,
-                    customer_id: req.params.id,
+                    customer_id: data[0].customer,
                     log_timestamp: new Date(),
                     ip: req.ip
                 }
