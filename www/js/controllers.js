@@ -51,7 +51,7 @@ angular.module('starter.controllers', [])
             });
         $scope.submit = function (password) {
             if (password) {
-                $http.post("/verify/" + $stateParams.code, {
+                $http.post("https://addin.dk/lm/verify/" + $stateParams.code, {
                     password: password
                 }).success(function (data, status, headers, config) {
                     console.log(data);
