@@ -42,7 +42,7 @@ angular.module('starter.controllers', [])
     })
 
     .controller('verifyCtrl', function ($scope, $rootScope, $http, $stateParams, $state) {
-        $http.get("/verify/" + $stateParams.code).
+        $http.get("https://addin.dk/lm/verify/" + $stateParams.code).
             success(function (data, status, headers, config) {
                 $scope.name = data.name;
             }).
