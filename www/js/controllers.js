@@ -82,13 +82,26 @@ angular.module('starter.controllers', [])
     })
 
     .controller('usersCtrl', function ($scope, $stateParams, socket, $ionicModal) {
-        socket.once('users', function (data) {
+        $scope.doc = {
+            name: '',
+            email: '',
+            role: 'user'
+        };
+        socket.on('users', function (data) {
             $scope.users = data;
             console.log(data);
         });
         socket.emit('users', $stateParams.id);
         $scope.add = function () {
-
+            socket.once('addUser', function (data) {
+                $scope.doc = {
+                    name: '',
+                    email: '',
+                    role: 'user'
+                };
+                socket.emit('users', $stateParams.id);
+            });
+            socket.emit('addUser', $scope.doc);
         };
         $scope.remove = function () {
 
