@@ -35,6 +35,7 @@ var sqlProvider = {
     users: {
         verify: sql('users/verify.sql'),
         add: sql('users/add.sql'),
+        update: sql('users/update.sql'),
         authorize: sql('users/authorize.sql')
     },
     // external queries for Loging:
@@ -120,7 +121,6 @@ app.post('/verify/:code', bodyParser.json(), function (req, res) {
         password: req.body.password,
         verified: new Date()
     };
-    console.log(options);
     db.any(sqlProvider.users.update, options).then(function (data) {
         console.log(data);
         res.json({
