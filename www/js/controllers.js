@@ -41,7 +41,7 @@ angular.module('starter.controllers', [])
         };
     })
 
-    .controller('verify', function ($scope, $rootScope, $http, $stateParams, $state) {
+    .controller('verifyCtrl', function ($scope, $rootScope, $http, $stateParams, $state) {
         $http.get("/verify/" + $stateParams.code).
             success(function (data, status, headers, config) {
                 $scope.name = data.name;
