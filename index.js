@@ -12,6 +12,7 @@ var iconv = require('iconv-lite');
 var basicAuth = require('basic-auth');
 var moment = require('moment');
 var app = express();
+var bodyParser = require('body-parser');
 var server = http.createServer(app);
 var socketIo = require('socket.io');//(server, {path: '/lm/socket.io'});
 var sio = socketIo.listen(server);
@@ -101,7 +102,7 @@ app.get('/verify/:code', function (req, res) {
     });
 
 });
-app.post('/verify/:code', function (req, res) {
+app.post('/verify/:code', bodyParser.json(), function (req, res) {
     if (!req.params.code) {
         return res.status(400).send(JSON.stringify({
             ok: false,
