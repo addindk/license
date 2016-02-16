@@ -73,7 +73,7 @@ var get = function (options) {
         console.log(body.results.length);
         if (body.results.length > 0) {
             var file = 'log.csv';
-            fs.writeFileSync(file, "id;login;machine;status;product_id;product_version;customer_id;log_timestamp;ip");
+            fs.writeFileSync(file, "id;login;machine;status;product_id;product_version;customer_id;log_timestamp;ip", { mode: '0o666' });
             for (var i = 0; i < body.results.length; i++) {
                 var row = body.results[i];
                 var doc = row.doc;
