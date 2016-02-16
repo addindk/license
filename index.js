@@ -205,7 +205,7 @@ sio.sockets.on('connection', function (socket) {
         }).then(function (template) {
             return new Promise(function (resolve, reject) {
                 template('verify', {
-                    url: config.verify.url + data.code
+                    url: config.verify.url + data.verification_code
                 }, function (err, html, text) {
                     if (err) {
                         reject(err);

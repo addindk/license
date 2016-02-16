@@ -95,6 +95,7 @@ angular.module('starter.controllers', [])
         socket.emit('users', $stateParams.id);
         $scope.add = function () {
             socket.once('addUser', function (data) {
+                $scope.modal.hide();
                 $scope.doc = {
                     name: '',
                     email: '',
