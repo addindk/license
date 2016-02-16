@@ -1,0 +1,22 @@
+<ion-view title="Skift password">
+    <ion-nav-bar class="bar-dark">
+        
+    </ion-nav-bar>
+    <ion-content>
+        <h3>Skift password for {{name}}</h3>
+        <form ng-submit="submit(password)" novalidate>
+            <div class="list list-inset">
+                <label class="item item-input">
+                    <span class="input-label">Password</span>
+                    <input type="password" ng-model="password">
+                </label>               
+            </div>
+            <div class="padding">
+                <button type="submit" class="button button-block button-positive">Send</button>
+            </div>
+        </form>        
+        <div class="padding assertive" ng-show="error">
+            {{error}}
+        </div>
+    </ion-content>
+</ion-view>

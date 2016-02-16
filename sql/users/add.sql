@@ -1,2 +1,2 @@
-INSERT INTO users(id,name,password,customer)
-VALUES(${id},${name},crypt(${password}, gen_salt('md5')),${customer})
+INSERT INTO users(id, name, customer, verification_code, created, role)
+VALUES(${email}, ${name}, ${customer}, ${verification_code}, ${created}, ${role})

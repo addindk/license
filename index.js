@@ -1,9 +1,9 @@
 var express = require('express');
 var http = require('http');
 var config = require('./config.json');
-
+var mailgun = require('mailgun-js')(config.mailgun);
 var jwt = require('jsonwebtoken');
-
+var uuid = require('node-uuid');
 //var serveStatic = require('serve-static');
 var pgp = require('pg-promise')({});
 var db = pgp(config.conString);
@@ -16,10 +16,15 @@ var server = http.createServer(app);
 var socketIo = require('socket.io');//(server, {path: '/lm/socket.io'});
 var sio = socketIo.listen(server);
 var socketioJwt = require('socketio-jwt');
+var emailTemplates = require('email-templates');
+var path = require('path');
+var templatesDir = path.join(__dirname, 'templates');
+
 app.use(express.static('www'));
 /*app.use(serveStatic(__dirname + '/www', {
     'index': ['index.html']
 }));*/
+
 var sql = function (file) {
     var relativePath = './sql/';
     return new pgp.QueryFile(relativePath + file, { minify: true });
@@ -27,6 +32,7 @@ var sql = function (file) {
 var sqlProvider = {
     // external queries for Users:
     users: {
+        verify: sql('users/verify.sql'),
         add: sql('users/add.sql'),
         authorize: sql('users/authorize.sql')
     },
@@ -73,7 +79,54 @@ var auth = function (req, res, next) {
         return unauthorized(res);
     }
 };
+app.get('/verify/:code', function (req, res) {
+    if (!req.params.code) {
+        return res.status(400).send(JSON.stringify({
+            ok: false,
+            message: 'A verification code is required.'
+        }));
+    }
+    db.one(sqlProvider.users.verify, { verification_code: req.params.code }).then(function (data) {
+        res.json({
+            ok: true,
+            message: 'Skift password',
+            email: data.id,
+            name: data.name
+        });
+    }).catch(function (err) {
+        res.status(400).json({
+            ok: false,
+            message: 'Invalid verification code.'
+        });
+    });
 
+});
+app.post('/verify/:code', function (req, res) {
+    if (!req.params.code) {
+        return res.status(400).send(JSON.stringify({
+            ok: false,
+            message: 'A verification code is required.'
+        }));
+    }
+    if (!req.body || !req.body.password) {
+        return res.status(400).send(JSON.stringify({
+            ok: false,
+            message: 'Nyt password er påkrævet.'
+        }));
+    }
+    db.any(sqlProvider.users.update, { verification_code: req.params.code, password: req.body.password, verified: new Date() }).then(function (data) {
+        console.log(data);
+        res.json({
+            ok: true
+        });
+    }).catch(function (err) {
+        res.status(400).json({
+            ok: false,
+            message: 'Invalid verification code.'
+        });
+    });
+
+});
 app.get('/daily/:customer/:product/:start', auth, function (req, res) {
     console.log(req.user);
     if (req.user.name === 'rune@addin.dk' || req.user.customer === req.params.customer) {
@@ -106,77 +159,98 @@ app.get('/daily/:customer/:product/:start', auth, function (req, res) {
     }
 });
 
-
-
-
-
-var authorize = function () {
-    var auth = {
-        secret: jwt_secret,
-        success: function (data, accept) {
-            if (data.request) {
-                accept();
-            } else {
-                accept(null, true);
-            }
-        },
-        fail: function (error, data, accept) {
-            if (data.request) {
-                accept(error);
-            } else {
-                accept(null, false);
-            }
-        }
-    };
-
-    return function (data, accept) {
-        var token;
-        var req = data.request || data;
-       
-        //get the token from query string
-        if (req._query && req._query.token) {
-            token = req._query.token;
-        }
-        else if (req.query && req.query.token) {
-            token = req.query.token;
-        } else if (data.token) {
-            token = data.token;
-        }
-        if (!token) {
-            return auth.success({}, accept);
-        }
-        jwt.verify(token, auth.secret, function (err, decoded) {
-            if (!err) {
-                data.decoded_token = decoded;
-            }
-            auth.success(data, accept);
-        });
-    };
-};
-var testExpire = function (socket) {
-    if (socket.hasOwnProperty('decoded_token')) {
-        console.log(Date.now() / 1000, socket.decoded_token);
-        if (Date.now() / 1000 > socket.decoded_token.exp) {
-            socket.emit('unauthenticated');
-            console.log('unauthenticated');
-            return false;
-        }
-        return true;
-    }
-    return false;
-}
-
-//sio.use(authorize());
 sio.sockets.on('connection', function (socket) {
-    /*if (socket.hasOwnProperty('decoded_token')) {
-        socket.emit('authenticated', { token: socket.token, profile: socket.decoded_token });
-    }*/
+
     socket.on('addUser', function (data) {
-        db.one(sqlProvider.users.add, data).then(function (res) {
-            socket.emit('addUser', res);
+        data.verification_code = uuid.v4();
+        data.created = new Date();
+        var profile;
+        new Promise(function (resolve, reject) {
+            if (socket.hasOwnProperty('token')) {
+                resolve();
+            } else {
+                reject('unauthenticated')
+            }
+        }).then(function () {
+            return new Promise(function (resolve, reject) {
+                jwt.verify(socket.token, jwt_secret, function (err, decoded) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        profile = decoded;
+                        resolve(decoded);
+                    }
+                });
+            });
+        }).then(function (decoded) {
+            return new Promise(function (resolve, reject) {
+                if (decoded.name === 'rune@addin.dk') {
+                    resolve(decoded);
+                } else {
+                    reject('permission');
+                }
+            });
+        }).then(function (decoded) {
+            return db.none(sqlProvider.users.add, data);
+        }).then(function () {
+            return new Promise(function (resolve, reject) {
+                emailTemplates(templatesDir, function (err, template) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(template);
+                    }
+                });
+            });
+        }).then(function (template) {
+            return new Promise(function (resolve, reject) {
+                template('verify', {
+                    url: config.verify.url + data.code
+                }, function (err, html, text) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ html: html, text: text });
+                    }
+                });
+            });
+        }).then(function (template) {
+            return new Promise(function (resolve, reject) {
+                mailgun.messages().send({
+                    from: config.verify.from,
+                    to: data.email,
+                    subject: 'Invitation',
+                    html: template.html,
+                    text: template.text
+                }, function (err, body) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(template);
+                    }
+                });
+            });
+        }).then(function (template) {
+            return new Promise(function (resolve, reject) {
+                mailgun.messages().send({
+                    from: config.verify.from,
+                    to: profile.name,
+                    subject: 'Du har sendt en invitation til ' + data.email,
+                    html: template.html,
+                    // generateTextFromHTML: true,
+                    text: template.text
+                }, function (err, body) {
+                    if (err) {
+                        reject(err)
+                    }
+                    resolve();
+                });
+            });
+        }).then(function () {
+            socket.emit('addUser');
         }).catch(function (err) {
             socket.emit('error', err);
-        });
+        })
     });
     socket.on('users', function (data) {
         if (socket.hasOwnProperty('token')) {
@@ -326,7 +400,6 @@ sio.sockets.on('connection', function (socket) {
                 }
                 else {
                     socket.token = data.t;
-
                     socket.emit('authenticated', {
                         token: data.t,
                         profile: decoded
@@ -339,7 +412,8 @@ sio.sockets.on('connection', function (socket) {
                 if (res.test) {
                     var profile = {
                         name: data.n,
-                        customer: res.customer
+                        customer: res.customer,
+                        role: res.role
                     };
                     var token = jwt.sign(profile, jwt_secret, {
                         expiresIn: 60 * 60 * 24

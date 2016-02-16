@@ -1,10 +1,15 @@
 <ion-view view-title="Users">
-  <ion-content>
-     <ion-list>
-      <ion-item class="item-icon-right" ng-repeat="user in users | orderBy:'name'" href="#/app/customers/{{customer.id}}/users/{{user.id}}">
-        <i class="icon ion-ios-arrow-right"></i>
-        {{user.name}}
-      </ion-item>
-    </ion-list>
-  </ion-content>
+    <ion-nav-buttons side="right">
+        <button class="button button-icon icon ion-ios-plus-outline" ng-click="modal.show()" ng-if="user.role==='sys' || user.role==='admin'">
+        </button>
+        <button class="button button-icon button-clear ion-navicon" menu-toggle="right">
+        </button>
+    </ion-nav-buttons>
+    <ion-content>
+        <ion-list>
+            <ion-item class="item-icon-right" ng-repeat="user in users | orderBy:'name'" href="#/app/customers/{{customer.id}}/users/{{user.id}}">
+                <i class="icon ion-ios-arrow-right"></i> {{user.name}}
+            </ion-item>
+        </ion-list>
+    </ion-content>
 </ion-view>

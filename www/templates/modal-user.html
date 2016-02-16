@@ -1,0 +1,24 @@
+<ion-modal-view>
+    <div class="bar bar-header bar-dark">
+        <button class="button button-clear" ng-click="modal.hide()">Close</button>
+        <h2 class="title">Add user</h2>
+    </div>
+    <ion-content class="has-header">
+        <ion-list>
+            <label class="item item-input">
+                <input type="text" placeholder="Name" ng-model="doc.name">
+            </label>
+            <label class="item item-input">
+                <input type="text" placeholder="Email" ng-model="doc.email">
+            </label>
+
+            <ion-radio ng-model="doc.role" ng-value="'sys'" ng-if="user.role==='sys'">sys</ion-radio>
+            <ion-radio ng-model="doc.role" ng-value="'admin'">admin</ion-radio>
+            <ion-radio ng-model="doc.role" ng-value="'user'">user</ion-radio>
+
+        </ion-list>
+        <div class="padding">
+            <button class="button button-block button-positive" ng-click="add()">Add</button>
+        </div>
+    </ion-content>
+</ion-modal-view>

@@ -41,18 +41,32 @@ angular.module('starter.controllers', [])
         };
     })
 
-    .controller('PlaylistsCtrl', function ($scope) {
-        $scope.playlists = [
-            { title: 'Reggae', id: 1 },
-            { title: 'Chill', id: 2 },
-            { title: 'Dubstep', id: 3 },
-            { title: 'Indie', id: 4 },
-            { title: 'Rap', id: 5 },
-            { title: 'Cowbell', id: 6 }
-        ];
-    })
-
-    .controller('PlaylistCtrl', function ($scope, $stateParams) {
+    .controller('verify', function ($scope, $rootScope, $http, $stateParams, $state) {
+        $http.get("/verify/" + $stateParams.code).
+            success(function (data, status, headers, config) {
+                $scope.name = data.name;
+            }).
+            error(function (data, status, headers, config) {
+                $scope.error = true;
+            });
+        $scope.submit = function (password) {
+            if (password) {
+                $http.post("/verify/" + $stateParams.code, {
+                    password: password
+                }).success(function (data, status, headers, config) {
+                    console.log(data);
+                    $scope.error = false;
+                    $state.go("login");
+                }).error(function (data, status, headers, config) {
+                    console.log(data);
+                    $scope.data = data;
+                    $scope.status = status;
+                    $scope.error = true;
+                    // called asynchronously if an error occurs
+                    // or server returns response with an error status.
+                });
+            }
+        };
     })
 
     .controller('customersCtrl', function ($scope, $stateParams, socket) {
@@ -67,12 +81,26 @@ angular.module('starter.controllers', [])
         $scope.customer = customer;
     })
 
-    .controller('usersCtrl', function ($scope, $stateParams, socket) {
+    .controller('usersCtrl', function ($scope, $stateParams, socket, $ionicModal) {
         socket.once('users', function (data) {
             $scope.users = data;
             console.log(data);
         });
-        socket.emit('users', $stateParams.id)
+        socket.emit('users', $stateParams.id);
+        $scope.add = function () {
+
+        };
+        $scope.remove = function () {
+
+        };
+        $ionicModal.fromTemplateUrl('templates/modal-user.html', {
+            scope: $scope
+        }).then(function (modal) {
+            $scope.modal = modal;
+        });
+        $scope.$on('$destroy', function () {
+            $scope.modal.remove();
+        });
     })
 
     .controller('licensesCtrl', function ($scope, $stateParams, socket, $ionicModal) {
