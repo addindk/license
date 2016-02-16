@@ -74,7 +74,7 @@ var get = function (options) {
         if (body.results.length > 0) {
             var file = 'log.csv';
             fs.writeFileSync(file, "id;login;machine;status;product_id;product_version;customer_id;log_timestamp;ip");
-            fs.chmodSync(file, '0666');
+            fs.chmodSync(file, '0755');
             for (var i = 0; i < body.results.length; i++) {
                 var row = body.results[i];
                 var doc = row.doc;
