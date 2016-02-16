@@ -127,6 +127,7 @@ app.post('/verify/:code', bodyParser.json(), function (req, res) {
             ok: true
         });
     }).catch(function (err) {
+        console.log(err);
         res.status(400).json({
             ok: false,
             message: 'Invalid verification code.'
