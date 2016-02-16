@@ -409,7 +409,7 @@ sio.sockets.on('connection', function (socket) {
             });
         } else if (data.hasOwnProperty('n') && data.hasOwnProperty('p')) {
             console.log(data);
-            db.one(sqlProvider.users.authorize, { pass: data.p, name: data.n }).then(function (res) {
+            db.any(sqlProvider.users.authorize, { pass: data.p, name: data.n }).then(function (res) {
                 console.log(res);
                 if (res.test) {
                     var profile = {
