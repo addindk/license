@@ -140,6 +140,9 @@ angular.module('starter.controllers', [])
 
     .controller('licensesCtrl', function ($scope, $stateParams, socket, $ionicModal) {
         $scope.stateParams = $stateParams;
+        $scope.doc = {
+            customer: $stateParams.id
+        }
         socket.on('licenses', function (data) {
             $scope.licenses = data;
         });
@@ -179,7 +182,7 @@ angular.module('starter.controllers', [])
                 $scope.modalAdd.hide();
                 socket.emit('licenses', $stateParams.id);
             });
-            socket.emit('addLicense', {customer: $stateParams.id, product: $scope.doc});
+            socket.emit('addLicense', $scope.doc);
         };
     })
 
