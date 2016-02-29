@@ -1,2 +1,2 @@
 SELECT id, name 
-FROM products
+FROM product

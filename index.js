@@ -244,7 +244,6 @@ sio.sockets.on('connection', function (socket) {
         })
     });
     socket.on('products', function () {
-        console.log('products');
         new Promise(function (resolve, reject) {
             if (socket.hasOwnProperty('token')) {
                 resolve();
@@ -270,7 +269,6 @@ sio.sockets.on('connection', function (socket) {
                 }
             });
         }).then(function (decoded) {
-            console.log('products');
             return db.manyOrNone(sqlProvider.product.list);
         }).then(function (res) {
             socket.emit('products', res);
