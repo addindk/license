@@ -45,6 +45,7 @@ var sqlProvider = {
         daily_product: sql('log/daily_product.sql')
     },
     customer: {
+        add: sql('customer/add.sql'),
         users: sql('customer/users.sql'),
         update_license: sql('customer/update-license.sql'),
         license: sql('customer/license.sql'),
@@ -168,6 +169,42 @@ app.get('/daily/:customer/:product/:start', auth, function (req, res) {
 });
 
 sio.sockets.on('connection', function (socket) {
+    socket.on('addCustomer', function (data) {
+        data.id = uuid.v4();        
+        var profile;
+        new Promise(function (resolve, reject) {
+            if (socket.hasOwnProperty('token')) {
+                resolve();
+            } else {
+                reject('unauthenticated')
+            }
+        }).then(function () {
+            return new Promise(function (resolve, reject) {
+                jwt.verify(socket.token, jwt_secret, function (err, decoded) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        profile = decoded;
+                        resolve(decoded);
+                    }
+                });
+            });
+        }).then(function (decoded) {
+            return new Promise(function (resolve, reject) {
+                if (decoded.name === 'rune@addin.dk') {
+                    resolve(decoded);
+                } else {
+                    reject('permission');
+                }
+            });
+        }).then(function (decoded) {
+            return db.none(sqlProvider.customer.add, data);
+        }).then(function () {
+            socket.emit('addCustomer');
+        }).catch(function (err) {
+            socket.emit('error', err);
+        })
+    });
 
     socket.on('addUser', function (data) {
         data.verification_code = uuid.v4();

@@ -67,12 +67,23 @@ angular.module('starter.controllers', [])
         };
     })
 
-    .controller('customersCtrl', function ($scope, $stateParams, socket) {
+    .controller('customersCtrl', function ($scope, $stateParams, socket, $ionicModal) {
+        $scope.doc = {
+            name: ''
+        };
         socket.once('customers', function (data) {
             $scope.customers = data;
             console.log(data);
         });
-        socket.emit('customers')
+        socket.emit('customers');
+        $ionicModal.fromTemplateUrl('templates/modal-customer.html', {
+            scope: $scope
+        }).then(function (modal) {
+            $scope.modal = modal;
+        });
+        $scope.$on('$destroy', function () {
+            $scope.modal.remove();
+        });
     })
 
     .controller('customerCtrl', function ($scope, $stateParams, socket, customer) {
