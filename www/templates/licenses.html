@@ -6,7 +6,7 @@
         </button>
     </ion-nav-buttons>
     <ion-content>
-        <ion-list can-swipe="user.role==='sys''">
+        <ion-list can-swipe="user.role==='sys'">
             <ion-item class="item-icon-right" ng-repeat="item in licenses | orderBy:'name'" href="#/app/customers/{{stateParams.id}}/licenses/{{item.id}}">
                 {{item.name}}
                 <span class="badge badge-stable">{{item.licenses}}</span>
