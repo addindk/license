@@ -71,7 +71,7 @@ angular.module('starter.controllers', [])
         $scope.doc = {
             name: ''
         };
-        socket.once('customers', function (data) {
+        socket.on('customers', function (data) {
             $scope.customers = data;
             console.log(data);
         });
@@ -90,9 +90,9 @@ angular.module('starter.controllers', [])
                 $scope.doc = {
                     name: ''                    
                 };
-                socket.emit('users', $stateParams.id);
+                socket.emit('customers', $stateParams.id);
             });
-            socket.emit('addUser', $scope.doc);
+            socket.emit('addCustomer', $scope.doc);
         };
     })
 
