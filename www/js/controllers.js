@@ -88,7 +88,7 @@ angular.module('starter.controllers', [])
             socket.once('addCustomer', function (data) {
                 $scope.modal.hide();
                 $scope.doc = {
-                    name: ''                    
+                    name: ''
                 };
                 socket.emit('customers', $stateParams.id);
             });
@@ -140,10 +140,13 @@ angular.module('starter.controllers', [])
 
     .controller('licensesCtrl', function ($scope, $stateParams, socket, $ionicModal) {
         $scope.stateParams = $stateParams;
-        socket.once('licenses', function (data) {
+        socket.on('licenses', function (data) {
             $scope.licenses = data;
-            console.log(data);
         });
+        socket.on('products', function (data) {
+            $scope.products = data;
+        });
+        socket.emit('products');
         socket.emit('licenses', $stateParams.id);
         $ionicModal.fromTemplateUrl('templates/modal-licenses.html', {
             scope: $scope
@@ -152,6 +155,7 @@ angular.module('starter.controllers', [])
         });
         $scope.$on('$destroy', function () {
             $scope.modalEdit.remove();
+            $scope.modalAdd.remove();
         });
         $scope.edit = function (item) {
             $scope.item = item;
@@ -162,6 +166,20 @@ angular.module('starter.controllers', [])
         });
         $scope.changeLicenses = function () {
             socket.emit('update_license', { customer: $stateParams.id, product: $scope.item.id, licenses: $scope.item.licenses });
+        };
+
+        $ionicModal.fromTemplateUrl('templates/modal-licenses-add.html', {
+            scope: $scope
+        }).then(function (modal) {
+            $scope.modalAdd = modal;
+        });
+
+        $scope.add = function () {
+            socket.once('addLicense', function (data) {
+                $scope.modalAdd.hide();
+                socket.emit('licenses', $stateParams.id);
+            });
+            socket.emit('addLicense', {customer: $stateParams.id, product: $scope.doc});
         };
     })
 

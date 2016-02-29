@@ -1,0 +1,11 @@
+<ion-modal-view>
+    <div class="bar bar-header bar-dark">
+        <button class="button button-clear" ng-click="modalAdd.hide()">Luk</button>
+        <h2 class="title">Add product</h2>
+    </div>
+    <ion-content class="has-header">
+        <ion-list>
+            <ion-radio ng-model="doc" ng-value="product.id" ng-repeat="product in products | orderBy:'name'">{{product.name}}</ion-radio>
+        </ion-list>
+    </ion-content>
+</ion-modal-view>

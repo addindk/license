@@ -31,7 +31,12 @@ var sql = function (file) {
     return new pgp.QueryFile(relativePath + file, { minify: true });
 }
 var sqlProvider = {
-    // external queries for Users:
+    product: {
+        list: sql('product/list.sql')
+    },
+    customer_product: {
+        add: sql('customer_product/add.sql')
+    },
     users: {
         verify: sql('users/verify.sql'),
         add: sql('users/add.sql'),
@@ -170,7 +175,7 @@ app.get('/daily/:customer/:product/:start', auth, function (req, res) {
 
 sio.sockets.on('connection', function (socket) {
     socket.on('addCustomer', function (data) {
-        data.id = uuid.v4();        
+        data.id = uuid.v4();
         var profile;
         new Promise(function (resolve, reject) {
             if (socket.hasOwnProperty('token')) {
@@ -205,7 +210,72 @@ sio.sockets.on('connection', function (socket) {
             socket.emit('error', err);
         })
     });
-
+    socket.on('addLicense', function (data) {
+        new Promise(function (resolve, reject) {
+            if (socket.hasOwnProperty('token')) {
+                resolve();
+            } else {
+                reject('unauthenticated')
+            }
+        }).then(function () {
+            return new Promise(function (resolve, reject) {
+                jwt.verify(socket.token, jwt_secret, function (err, decoded) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(decoded);
+                    }
+                });
+            });
+        }).then(function (decoded) {
+            return new Promise(function (resolve, reject) {
+                if (decoded.name === 'rune@addin.dk') {
+                    resolve(decoded);
+                } else {
+                    reject('permission');
+                }
+            });
+        }).then(function (decoded) {
+            return db.none(sqlProvider.customer_product.add, data);
+        }).then(function () {
+            socket.emit('addLicense');
+        }).catch(function (err) {
+            socket.emit('error', err);
+        })
+    });
+    socket.on('products', function () {
+        new Promise(function (resolve, reject) {
+            if (socket.hasOwnProperty('token')) {
+                resolve();
+            } else {
+                reject('unauthenticated')
+            }
+        }).then(function () {
+            return new Promise(function (resolve, reject) {
+                jwt.verify(socket.token, jwt_secret, function (err, decoded) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(decoded);
+                    }
+                });
+            });
+        }).then(function (decoded) {
+            return new Promise(function (resolve, reject) {
+                if (decoded.name === 'rune@addin.dk') {
+                    resolve(decoded);
+                } else {
+                    reject('permission');
+                }
+            });
+        }).then(function (decoded) {
+            return db.manyOrNone(sqlProvider.product.list);
+        }).then(function () {
+            socket.emit('products');
+        }).catch(function (err) {
+            socket.emit('error', err);
+        })
+    });
     socket.on('addUser', function (data) {
         data.verification_code = uuid.v4();
         data.created = new Date();
