@@ -84,6 +84,16 @@ angular.module('starter.controllers', [])
         $scope.$on('$destroy', function () {
             $scope.modal.remove();
         });
+        $scope.add = function () {
+            socket.once('addCustomer', function (data) {
+                $scope.modal.hide();
+                $scope.doc = {
+                    name: ''                    
+                };
+                socket.emit('users', $stateParams.id);
+            });
+            socket.emit('addUser', $scope.doc);
+        };
     })
 
     .controller('customerCtrl', function ($scope, $stateParams, socket, customer) {
