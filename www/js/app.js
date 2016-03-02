@@ -7,7 +7,7 @@
 angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', 'ngStorage'])
 
     .run(function ($ionicPlatform, $rootScope, $state, socket) {
-        google.charts.load('current', { 'packages': ['timeline', 'corechart'] , 'language': 'en'});
+        google.charts.load('current', { 'packages': ['timeline', 'corechart'], 'language': 'en' });
         google.charts.setOnLoadCallback(function () {
             $rootScope.$emit('chart');
             $rootScope.chart = true;
@@ -44,7 +44,7 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
                 templateUrl: "templates/login.html",
                 controller: 'loginCtrl'
             })
-            
+
             .state('verify', {
                 cache: false,
                 url: "/verify/:code",
@@ -83,7 +83,24 @@ angular.module('starter', ['ionic', 'starter.controllers', 'starter.services', '
                     }
                 }
             })
-
+            .state('app.products', {
+                url: '/products',
+                views: {
+                    'menuContent': {
+                        templateUrl: 'templates/products.html',
+                        controller: 'productsCtrl'
+                    }
+                },
+                resolve: {
+                    admin: function ($rootScope, $q) {
+                        if ($rootScope.user.role === 'sys') {
+                            return $q.resolve();
+                        } else {
+                            return $q.reject();
+                        }
+                    }
+                }
+            })
             .state('app.customers', {
                 url: '/customers',
                 views: {

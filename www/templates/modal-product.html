@@ -1,0 +1,16 @@
+<ion-modal-view>
+    <div class="bar bar-header bar-dark">
+        <button class="button button-clear" ng-click="modal.hide()">Close</button>
+        <h2 class="title">Add product</h2>
+    </div>
+    <ion-content class="has-header">
+        <ion-list>
+            <label class="item item-input">
+                <input type="text" placeholder="Name" ng-model="doc.name">
+            </label>                        
+        </ion-list>
+        <div class="padding">
+            <button class="button button-block button-positive" ng-click="add()">Add</button>
+        </div>
+    </ion-content>
+</ion-modal-view>

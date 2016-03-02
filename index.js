@@ -32,7 +32,8 @@ var sql = function (file) {
 }
 var sqlProvider = {
     product: {
-        list: sql('product/list.sql')
+        list: sql('product/list.sql'),
+        add: sql('product/add.sql')
     },
     customer_product: {
         add: sql('customer_product/add.sql')
@@ -239,6 +240,42 @@ sio.sockets.on('connection', function (socket) {
             return db.none(sqlProvider.customer_product.add, data);
         }).then(function () {
             socket.emit('addLicense');
+        }).catch(function (err) {
+            socket.emit('error', err);
+        })
+    });
+    socket.on('addProduct', function (data) {
+        data.id = uuid.v4();
+        var profile;
+        new Promise(function (resolve, reject) {
+            if (socket.hasOwnProperty('token')) {
+                resolve();
+            } else {
+                reject('unauthenticated')
+            }
+        }).then(function () {
+            return new Promise(function (resolve, reject) {
+                jwt.verify(socket.token, jwt_secret, function (err, decoded) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        profile = decoded;
+                        resolve(decoded);
+                    }
+                });
+            });
+        }).then(function (decoded) {
+            return new Promise(function (resolve, reject) {
+                if (decoded.name === 'rune@addin.dk') {
+                    resolve(decoded);
+                } else {
+                    reject('permission');
+                }
+            });
+        }).then(function (decoded) {
+            return db.none(sqlProvider.product.add, data);
+        }).then(function () {
+            socket.emit('addProduct');
         }).catch(function (err) {
             socket.emit('error', err);
         })

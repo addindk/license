@@ -67,6 +67,35 @@ angular.module('starter.controllers', [])
         };
     })
 
+    .controller('productsCtrl', function ($scope, $stateParams, socket, $ionicModal) {
+        $scope.doc = {
+            name: ''
+        };
+        socket.on('products', function (data) {
+            $scope.products = data;
+        });
+        socket.emit('products');
+        $ionicModal.fromTemplateUrl('templates/modal-product.html', {
+            scope: $scope
+        }).then(function (modal) {
+            $scope.modal = modal;
+        });
+        $scope.$on('$destroy', function () {
+            $scope.modal.remove();
+        });
+        $scope.add = function () {
+            socket.once('addProduct', function (data) {
+                $scope.modal.hide();
+                $scope.doc = {
+                    name: ''
+                };
+                socket.emit('products', $stateParams.id);
+            });
+            socket.emit('addProduct', $scope.doc);
+        };
+    })
+
+
     .controller('customersCtrl', function ($scope, $stateParams, socket, $ionicModal) {
         $scope.doc = {
             name: ''

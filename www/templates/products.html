@@ -1,0 +1,15 @@
+<ion-view view-title="Products">
+    <ion-nav-buttons side="right">
+        <button class="button button-icon icon ion-ios-plus-outline" ng-click="modal.show()" ng-if="user.role==='sys'">
+        </button>
+        <button class="button button-icon button-clear ion-navicon" menu-toggle="right">
+        </button>
+    </ion-nav-buttons>
+    <ion-content>
+        <ion-list>
+            <ion-item class="item-icon-right" ng-repeat="product in products | orderBy:'name'" href="#/app/products/{{product.id}}">
+                <i class="icon ion-ios-arrow-right"></i> {{product.name}}
+            </ion-item>
+        </ion-list>
+    </ion-content>
+</ion-view>
