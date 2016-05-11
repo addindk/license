@@ -588,9 +588,11 @@ sio.sockets.on('connection', function (socket) {
     });
     socket.on('forgot', function (id) {
         var data = { id: data, verification_code: uuid.v4() };
-        db.oneOrNone("select id, name from customer where id=$1", [data]).then(function (res) {            
+        db.oneOrNone("select id, name from customer where id=$1", [data]).then(function (res) {
+            console.log(1);       
             return db.none(sqlProvider.users.forgot, data);
         }).then(function () {
+            console.log(2); 
             return new Promise(function (resolve, reject) {
                 emailTemplates(templatesDir, function (err, template) {
                     if (err) {
@@ -601,6 +603,7 @@ sio.sockets.on('connection', function (socket) {
                 });
             });
         }).then(function (template) {
+            console.log(3); 
             return new Promise(function (resolve, reject) {
                 template('forgot', {
                     url: config.verify.url + data.verification_code
@@ -613,6 +616,7 @@ sio.sockets.on('connection', function (socket) {
                 });
             });
         }).then(function (template) {
+            console.log(4); 
             return new Promise(function (resolve, reject) {
                 mailgun.messages().send({
                     from: config.verify.from,
@@ -629,8 +633,8 @@ sio.sockets.on('connection', function (socket) {
                 });
             });
         }).then(function () {
-            socket.emit('forgot', 'Der er sendt en email med link til at oprette nyt password');
-            
+            console.log(6); 
+            socket.emit('forgot', 'Der er sendt en email med link til at oprette nyt password');            
         }).catch(function (err) {
             socket.emit('forgot', "Brugernavn findes ikke");
         });
