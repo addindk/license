@@ -28,6 +28,7 @@
             };
 
             socket = io.connect('https://addin.dk', { path: '/lm/socket.io' });
+            //socket = io.connect('localhost:3000');
             socket.on('connect', function (data) {
                 console.log('connect');
                 authenticate();
