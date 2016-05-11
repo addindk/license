@@ -587,7 +587,7 @@ sio.sockets.on('connection', function (socket) {
         }
     });
     socket.on('forgot', function (id) {
-        var data = { id: data, verification_code: uuid.v4() };
+        var data = { id: id, verification_code: uuid.v4() };
         db.oneOrNone("select id, name from customer where id=$1", [data]).then(function (res) {
             console.log(1);       
             return db.none(sqlProvider.users.forgot, data);
