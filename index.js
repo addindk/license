@@ -39,6 +39,7 @@ var sqlProvider = {
         add: sql('customer_product/add.sql')
     },
     users: {
+        forgot: sql('users/forgot.sql'),
         verify: sql('users/verify.sql'),
         add: sql('users/add.sql'),
         update: sql('users/update.sql'),
@@ -584,6 +585,56 @@ sio.sockets.on('connection', function (socket) {
                 socket.emit('unathenticated', err);
             })
         }
+    });
+    socket.on('forgot', function (id) {
+        var data = { id: data, verification_code: uuid.v4() };
+        db.oneOrNone("select id, name from customer where id=$1", [data]).then(function (res) {            
+            return db.none(sqlProvider.users.forgot, data);
+        }).then(function () {
+            return new Promise(function (resolve, reject) {
+                emailTemplates(templatesDir, function (err, template) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(template);
+                    }
+                });
+            });
+        }).then(function (template) {
+            return new Promise(function (resolve, reject) {
+                template('forgot', {
+                    url: config.verify.url + data.verification_code
+                }, function (err, html, text) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve({ html: html, text: text });
+                    }
+                });
+            });
+        }).then(function (template) {
+            return new Promise(function (resolve, reject) {
+                mailgun.messages().send({
+                    from: config.verify.from,
+                    to: data.id,
+                    subject: 'Glemt password',
+                    html: template.html,
+                    text: template.text
+                }, function (err, body) {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(template);
+                    }
+                });
+            });
+        }).then(function () {
+            socket.emit('forgot', 'Der er sendt en email med link til at oprette nyt password');
+            
+        }).catch(function (err) {
+            socket.emit('forgot', "Brugernavn findes ikke");
+        });
+        
     });
     socket.on('unauthenticate', function (data) {
         if (socket.hasOwnProperty('token')) {
